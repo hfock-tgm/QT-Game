@@ -1,4 +1,5 @@
 import sys
+from time import time
 from random import shuffle
 from PySide.QtCore import Qt
 from PySide.QtGui import *
@@ -13,6 +14,9 @@ class Controller(QMainWindow):
         super().__init__(parent)
         self.view = View()
         self.view.setupUi(self)
+        self.timeDiff = None
+        self.timeStart = None
+        self.timeEnd = None
 
         self.buttonList = [
             self.view.pushButton_3,self.view.pushButton_4,self.view.pushButton_5,self.view.pushButton_6,self.view.pushButton_7,
@@ -54,12 +58,18 @@ class Controller(QMainWindow):
     def connectButtons(self):
         # verbindet die die Callbacks mit den Button
         for button in self.buttonList:
-            button.clicked.connect(self.buttonCallbacks())
+            button.clicked.connect(self.buttonCallbacks)
 
         # Der Neu Start Button wird mit der neuStart() Methode verknuepft
-        self.view.pushButton_2.clicked.connect(self.neuStart())
+        self.view.pushButton_2.clicked.connect(self.neuStart)
         # Der Beenden Button schliest die Applikation
-        self.view.pushButton.clicked.connect(sys.exit(0))
+        self.view.pushButton.clicked.connect(self.closeApp)
+
+    '''
+    Schliesst das Fenster
+    '''
+    def closeApp(self):
+        sys.exit(0);
 
     '''
     Ueberprueft was passieren soll nachdem ein Button geklickt wird
@@ -69,7 +79,10 @@ class Controller(QMainWindow):
         # Damit der Sender eh ein QPushButton ist
         if type(sender) == QPushButton:
             value = int(sender.text())
+            print (value)
 
+            if value == 1:
+                self.startTime = time()
             if value == self.model.aktuell:
                 self.model.buttonKlickKorrekt()
                 sender.setEnabled(False)
@@ -81,7 +94,11 @@ class Controller(QMainWindow):
             raise RuntimeError("A sender of the type '" + type(sender) + "' was found in button callback method")
 
         if self.model.verbleibend == 0:
+            self.endTime = time()
+            self.timeDiff = self.endTime - self.startTime
             self.winWindow()
+
+
 
     '''
     Veraendert die Rheinfolge der buttonList und nummeriert diese dann durch
@@ -116,7 +133,8 @@ class Controller(QMainWindow):
         q = QMessageBox()
         q.setWindowTitle("Fertig!")
         q.setTextFormat(Qt.RichText)
-        q.setText("<center>Schritte benötigt: " + str(self.model.gesamt) + "</center>")
+        q.setText("<center>Schritte benötigt: " + str(self.model.gesamt) + "</center>" + "\n" +
+                  "<center>Zeit benötigt: " + str(self.timeDiff) + "</center>")
         q.exec()
 
 if __name__ == "__main__":
